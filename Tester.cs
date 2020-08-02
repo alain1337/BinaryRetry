@@ -13,16 +13,19 @@ namespace BinaryRetry
         public int FailCount { get; private set; }
         public int RecordsProcessed { get; private set; }
 
-        public void Do(IList<TestData> data)
+        public void Do(IList<TestData> data, int start, int count)
         {
-            if (data.Any(d => d.Fail))
+            for (var pos=0; pos < count; pos++)
             {
-                FailCount++;
-                throw new Exception("Oops, told to fail");
+                if (data[start+pos].Fail)
+                {
+                    FailCount++;
+                    throw new Exception("Oops, told to fail");
+                }
             }
 
             SuccessCount++;
-            RecordsProcessed += data.Count;
+            RecordsProcessed += count;
         }
     }
 

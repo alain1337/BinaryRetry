@@ -11,7 +11,7 @@ namespace BinaryRetry
     {
         static readonly IList<Partition> _emptyPartitions = new List<Partition>().AsReadOnly();
 
-        public static IList<Partition> Partition(int count, int partitions)
+        public static IList<Partition> ByCount(int count, int partitions)
         {
             if (partitions < 1)
                 throw new ArgumentOutOfRangeException(nameof(partitions) + " must be > 0");
@@ -32,6 +32,24 @@ namespace BinaryRetry
                     parts.Add(new Partition(s, Math.Min(partSize, count - s)));
             }
 
+            return parts.AsReadOnly();
+        }
+
+        public static IList<Partition> ByMaxSize(int count, int maxSize)
+        {
+            if (maxSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxSize) + " must be > 0");
+            if (count < 1)
+                return _emptyPartitions;
+
+            var parts = new List<Partition>();
+            var s = 0;
+            while (s <= count - 1)
+            {
+                var c = Math.Min(maxSize, count - s);
+                parts.Add(new Partition(s, c));
+                s += maxSize;
+            }
             return parts.AsReadOnly();
         }
     }

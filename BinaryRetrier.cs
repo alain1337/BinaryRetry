@@ -8,54 +8,57 @@ namespace BinaryRetry
 {
     public class BinaryRetrier<T>
     {
-        public Action<IList<T>> Action { get; }
+        public Action<IList<T>,int,int> Action { get; }
+        public int SliceSize { get; }
+        public int RetryPartitions { get; }
 
-        public BinaryRetrier(Action<IList<T>> action)
+        public BinaryRetrier(Action<IList<T>, int, int> action, int sliceSize, int retryPartitions)
         {
             Action = action;
+            SliceSize = sliceSize;
+            RetryPartitions = retryPartitions;
         }
 
-        public BinaryRetryResult<T> Execute(IList<T> data, int sliceSize)
+        public BinaryRetryResult<T> Execute(IList<T> data)
         {
             var results = new BinaryRetryResult<T>();
-            for (var i = 0;; i++)
+            foreach (var slice in Partitioner.ByMaxSize(data.Count, SliceSize))
             {
-                var slice = data.Skip(i * sliceSize).Take(sliceSize).ToList();
-                if (slice.Count == 0)
-                    return results;
                 try
                 {
-                    Execute(slice, results);
+                    Execute(data, slice.Start, slice.Count, results);
                 }
                 catch
                 {
                     // Ignore
                 }
             }
+
+            return results;
         }
 
-        void Execute(IList<T> data, BinaryRetryResult<T> results)
+        void Execute(IList<T> data, int start, int count, BinaryRetryResult<T> results)
         {
-            if (data.Count == 0)
+            if (count == 0)
                 return;
 
             results.Executes++;
             try
             {
-                Action(data);
+                Action(data, start, count);
                 return;
             }
             catch
             {
-                if (data.Count == 1)
+                if (count == 1)
                 {
-                    results.FailedRecords.AddRange(data);
+                    results.FailedRecords.Add(data[start]);
                     return;
                 }
             }
 
-            Execute(data.Take(data.Count / 2).ToList(), results);
-            Execute(data.Skip(data.Count / 2).ToList(), results);
+            foreach (var part in Partitioner.ByCount(count, RetryPartitions))
+                Execute(data, start+part.Start, part.Count, results);
         }
     }
 
