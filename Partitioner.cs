@@ -9,14 +9,14 @@ namespace BinaryRetry
 {
     public static class Partitioner
     {
-        static readonly IList<Partition> _emptyPartitions = new List<Partition>().AsReadOnly();
+        static readonly IList<Partition> EmptyPartitions = new List<Partition>().AsReadOnly();
 
         public static IList<Partition> ByCount(int count, int partitions)
         {
             if (partitions < 1)
                 throw new ArgumentOutOfRangeException(nameof(partitions) + " must be > 0");
             if (count < 1)
-                return _emptyPartitions;
+                return EmptyPartitions;
 
             var parts = new List<Partition>();
             var partSize = Math.Max(count / partitions, 1);
@@ -40,7 +40,7 @@ namespace BinaryRetry
             if (maxSize < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxSize) + " must be > 0");
             if (count < 1)
-                return _emptyPartitions;
+                return EmptyPartitions;
 
             var parts = new List<Partition>();
             var s = 0;
